@@ -1,4 +1,4 @@
-query ProductListByCategory($slug: String!, $channel: String!) {
+query ProductListByCategory($slug: String!, $channel: String!, $languageCode: LanguageCodeEnum!) {
 	category(slug: $slug) {
 		name
 		description

@@ -1,4 +1,4 @@
-query ProductDetails($slug: String!, $channel: String!) {
+query ProductDetails($slug: String!, $channel: String!, $languageCode: LanguageCodeEnum!) {
 	product(slug: $slug, channel: $channel) {
 		id
 		name
@@ -16,6 +16,9 @@ query ProductDetails($slug: String!, $channel: String!) {
 		}
 		variants {
 			...VariantDetails
+		}
+		translation(languageCode: $languageCode) {
+			name
 		}
 		pricing {
 			priceRange {

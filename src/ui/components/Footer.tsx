@@ -2,12 +2,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { ChannelSelect } from "./ChannelSelect";
-import { ChannelsListDocument, MenuGetBySlugDocument } from "@/gql/graphql";
+import { ChannelsListDocument, LanguageCodeEnum, MenuGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 
 export async function Footer({ channel }: { channel: string }) {
 	const footerLinks = await executeGraphQL(MenuGetBySlugDocument, {
-		variables: { slug: "footer", channel },
+		variables: { slug: "footer", channel, languageCode: LanguageCodeEnum.UrPk },
 		revalidate: 60 * 60 * 24,
 	});
 	const channels = process.env.SALEOR_APP_TOKEN
@@ -17,7 +17,7 @@ export async function Footer({ channel }: { channel: string }) {
 					// and use app token instead
 					Authorization: `Bearer ${process.env.SALEOR_APP_TOKEN}`,
 				},
-		  })
+			})
 		: null;
 	const currentYear = new Date().getFullYear();
 
@@ -28,14 +28,16 @@ export async function Footer({ channel }: { channel: string }) {
 					{footerLinks.menu?.items?.map((item) => {
 						return (
 							<div key={item.id}>
-								<h3 className="text-sm font-semibold text-neutral-900">{item.name}</h3>
+								<h3 className="text-sm font-semibold text-neutral-900">
+									{item?.translation?.name || item.name}
+								</h3>
 								<ul className="mt-4 space-y-4 [&>li]:text-neutral-500">
 									{item.children?.map((child) => {
 										if (child.category) {
 											return (
 												<li key={child.id} className="text-sm">
 													<LinkWithChannel href={`/categories/${child.category.slug}`}>
-														{child.category.name}
+														{child.category.translation?.name || child.category.name}
 													</LinkWithChannel>
 												</li>
 											);
@@ -44,7 +46,7 @@ export async function Footer({ channel }: { channel: string }) {
 											return (
 												<li key={child.id} className="text-sm">
 													<LinkWithChannel href={`/collections/${child.collection.slug}`}>
-														{child.collection.name}
+														{child.translation?.name || child.collection.name}
 													</LinkWithChannel>
 												</li>
 											);
@@ -53,7 +55,7 @@ export async function Footer({ channel }: { channel: string }) {
 											return (
 												<li key={child.id} className="text-sm">
 													<LinkWithChannel href={`/pages/${child.page.slug}`}>
-														{child.page.title}
+														{child?.translation?.name || child.page.title}
 													</LinkWithChannel>
 												</li>
 											);
@@ -61,7 +63,9 @@ export async function Footer({ channel }: { channel: string }) {
 										if (child.url) {
 											return (
 												<li key={child.id} className="text-sm">
-													<LinkWithChannel href={child.url}>{child.name}</LinkWithChannel>
+													<LinkWithChannel href={child.url}>
+														{child?.translation?.name || child.name}
+													</LinkWithChannel>
 												</li>
 											);
 										}

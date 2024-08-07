@@ -1,4 +1,4 @@
-import { ProductListByCollectionDocument } from "@/gql/graphql";
+import { LanguageCodeEnum, ProductListByCollectionDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { ProductList } from "@/ui/components/ProductList";
 
@@ -13,6 +13,7 @@ export default async function Page({ params }: { params: { channel: string } }) 
 		variables: {
 			slug: "featured-products",
 			channel: params.channel,
+			languageCode: LanguageCodeEnum.UrPk,
 		},
 		revalidate: 60,
 	});

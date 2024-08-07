@@ -10,7 +10,12 @@ import { VariantSelector } from "@/ui/components/VariantSelector";
 import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
 import { executeGraphQL } from "@/lib/graphql";
 import { formatMoney, formatMoneyRange } from "@/lib/utils";
-import { CheckoutAddLineDocument, ProductDetailsDocument, ProductListDocument } from "@/gql/graphql";
+import {
+	CheckoutAddLineDocument,
+	LanguageCodeEnum,
+	ProductDetailsDocument,
+	ProductListDocument,
+} from "@/gql/graphql";
 import * as Checkout from "@/lib/checkout";
 import { AvailabilityMessage } from "@/ui/components/AvailabilityMessage";
 
@@ -28,6 +33,7 @@ export async function generateMetadata(
 		variables: {
 			slug: decodeURIComponent(params.slug),
 			channel: params.channel,
+			languageCode: LanguageCodeEnum.UrPk,
 		},
 		revalidate: 60,
 	});
@@ -56,7 +62,7 @@ export async function generateMetadata(
 							alt: product.name,
 						},
 					],
-			  }
+				}
 			: null,
 	};
 }
@@ -64,7 +70,7 @@ export async function generateMetadata(
 export async function generateStaticParams({ params }: { params: { channel: string } }) {
 	const { products } = await executeGraphQL(ProductListDocument, {
 		revalidate: 60,
-		variables: { first: 20, channel: params.channel },
+		variables: { first: 20, channel: params.channel, languageCode: LanguageCodeEnum.UrPk },
 		withAuth: false,
 	});
 
@@ -85,6 +91,7 @@ export default async function Page({
 		variables: {
 			slug: decodeURIComponent(params.slug),
 			channel: params.channel,
+			languageCode: LanguageCodeEnum.UrPk,
 		},
 		revalidate: 60,
 	});
@@ -132,11 +139,11 @@ export default async function Page({
 	const price = selectedVariant?.pricing?.price?.gross
 		? formatMoney(selectedVariant.pricing.price.gross.amount, selectedVariant.pricing.price.gross.currency)
 		: isAvailable
-		  ? formatMoneyRange({
+			? formatMoneyRange({
 					start: product?.pricing?.priceRange?.start?.gross,
 					stop: product?.pricing?.priceRange?.stop?.gross,
-		    })
-		  : "";
+				})
+			: "";
 
 	const productJsonLd: WithContext<Product> = {
 		"@context": "https://schema.org",
@@ -154,7 +161,7 @@ export default async function Page({
 						priceCurrency: selectedVariant.pricing?.price?.gross.currency,
 						price: selectedVariant.pricing?.price?.gross.amount,
 					},
-			  }
+				}
 			: {
 					name: product.name,
 
@@ -168,7 +175,7 @@ export default async function Page({
 						lowPrice: product.pricing?.priceRange?.start?.gross.amount,
 						highPrice: product.pricing?.priceRange?.stop?.gross.amount,
 					},
-			  }),
+				}),
 	};
 
 	return (
@@ -194,7 +201,7 @@ export default async function Page({
 				<div className="flex flex-col pt-6 sm:col-span-1 sm:px-6 sm:pt-0 lg:col-span-3 lg:pt-16">
 					<div>
 						<h1 className="mb-4 flex-auto text-3xl font-medium tracking-tight text-neutral-900">
-							{product?.name}
+							{product?.translation?.name || product?.name}
 						</h1>
 						<p className="mb-8 text-sm " data-testid="ProductElement_Price">
 							{price}
