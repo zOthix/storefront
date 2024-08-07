@@ -2,14 +2,20 @@ import { notFound } from "next/navigation";
 import { type Metadata } from "next";
 import edjsHTML from "editorjs-html";
 import xss from "xss";
-import { LanguageCodeEnum, PageGetBySlugDocument } from "@/gql/graphql";
+import { CurrentUserDocument, type LanguageCodeEnum, PageGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 
 const parser = edjsHTML();
 
 export const generateMetadata = async ({ params }: { params: { slug: string } }): Promise<Metadata> => {
+	const { me: user } = await executeGraphQL(CurrentUserDocument, {
+		cache: "no-cache",
+	});
 	const { page } = await executeGraphQL(PageGetBySlugDocument, {
-		variables: { slug: params.slug, languageCode: LanguageCodeEnum.UrPk },
+		variables: {
+			slug: params.slug,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
+		},
 		revalidate: 60,
 	});
 
@@ -20,8 +26,14 @@ export const generateMetadata = async ({ params }: { params: { slug: string } })
 };
 
 export default async function Page({ params }: { params: { slug: string } }) {
+	const { me: user } = await executeGraphQL(CurrentUserDocument, {
+		cache: "no-cache",
+	});
 	const { page } = await executeGraphQL(PageGetBySlugDocument, {
-		variables: { slug: params.slug, languageCode: LanguageCodeEnum.UrPk },
+		variables: {
+			slug: params.slug,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
+		},
 		revalidate: 60,
 	});
 

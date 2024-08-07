@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { type ResolvingMetadata, type Metadata } from "next";
-import { LanguageCodeEnum, ProductListByCategoryDocument } from "@/gql/graphql";
+import { CurrentUserDocument, type LanguageCodeEnum, ProductListByCategoryDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { ProductList } from "@/ui/components/ProductList";
 
@@ -8,8 +8,15 @@ export const generateMetadata = async (
 	{ params }: { params: { slug: string; channel: string } },
 	parent: ResolvingMetadata,
 ): Promise<Metadata> => {
+	const { me: user } = await executeGraphQL(CurrentUserDocument, {
+		cache: "no-cache",
+	});
 	const { category } = await executeGraphQL(ProductListByCategoryDocument, {
-		variables: { slug: params.slug, channel: params.channel, languageCode: LanguageCodeEnum.UrPk },
+		variables: {
+			slug: params.slug,
+			channel: params.channel,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
+		},
 		revalidate: 60,
 	});
 
@@ -20,8 +27,15 @@ export const generateMetadata = async (
 };
 
 export default async function Page({ params }: { params: { slug: string; channel: string } }) {
+	const { me: user } = await executeGraphQL(CurrentUserDocument, {
+		cache: "no-cache",
+	});
 	const { category } = await executeGraphQL(ProductListByCategoryDocument, {
-		variables: { slug: params.slug, channel: params.channel, languageCode: LanguageCodeEnum.UrPk },
+		variables: {
+			slug: params.slug,
+			channel: params.channel,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
+		},
 		revalidate: 60,
 	});
 

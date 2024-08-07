@@ -1,3 +1,4 @@
+"use server";
 import edjsHTML from "editorjs-html";
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
@@ -12,12 +13,20 @@ import { executeGraphQL } from "@/lib/graphql";
 import { formatMoney, formatMoneyRange } from "@/lib/utils";
 import {
 	CheckoutAddLineDocument,
+	CurrentUserDocument,
 	LanguageCodeEnum,
 	ProductDetailsDocument,
 	ProductListDocument,
 } from "@/gql/graphql";
 import * as Checkout from "@/lib/checkout";
 import { AvailabilityMessage } from "@/ui/components/AvailabilityMessage";
+
+export async function getCurrentUser() {
+	const { me: user } = await executeGraphQL(CurrentUserDocument, {
+		cache: "no-cache",
+	});
+	return user;
+}
 
 export async function generateMetadata(
 	{
@@ -29,11 +38,12 @@ export async function generateMetadata(
 	},
 	parent: ResolvingMetadata,
 ): Promise<Metadata> {
+	const user = await getCurrentUser();
 	const { product } = await executeGraphQL(ProductDetailsDocument, {
 		variables: {
 			slug: decodeURIComponent(params.slug),
 			channel: params.channel,
-			languageCode: LanguageCodeEnum.UrPk,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
 		},
 		revalidate: 60,
 	});
@@ -68,9 +78,14 @@ export async function generateMetadata(
 }
 
 export async function generateStaticParams({ params }: { params: { channel: string } }) {
+	const user = await getCurrentUser();
 	const { products } = await executeGraphQL(ProductListDocument, {
 		revalidate: 60,
-		variables: { first: 20, channel: params.channel, languageCode: LanguageCodeEnum.UrPk },
+		variables: {
+			first: 20,
+			channel: params.channel,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
+		},
 		withAuth: false,
 	});
 
@@ -87,11 +102,12 @@ export default async function Page({
 	params: { slug: string; channel: string };
 	searchParams: { variant?: string };
 }) {
+	const user = await getCurrentUser();
 	const { product } = await executeGraphQL(ProductDetailsDocument, {
 		variables: {
 			slug: decodeURIComponent(params.slug),
 			channel: params.channel,
-			languageCode: LanguageCodeEnum.UrPk,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
 		},
 		revalidate: 60,
 	});

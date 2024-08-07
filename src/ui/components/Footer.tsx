@@ -2,12 +2,24 @@ import Link from "next/link";
 import Image from "next/image";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { ChannelSelect } from "./ChannelSelect";
-import { ChannelsListDocument, LanguageCodeEnum, MenuGetBySlugDocument } from "@/gql/graphql";
+import {
+	ChannelsListDocument,
+	CurrentUserDocument,
+	LanguageCodeEnum,
+	MenuGetBySlugDocument,
+} from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 
 export async function Footer({ channel }: { channel: string }) {
+	const { me: user } = await executeGraphQL(CurrentUserDocument, {
+		cache: "no-cache",
+	});
 	const footerLinks = await executeGraphQL(MenuGetBySlugDocument, {
-		variables: { slug: "footer", channel, languageCode: LanguageCodeEnum.UrPk },
+		variables: {
+			slug: "footer",
+			channel,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
+		},
 		revalidate: 60 * 60 * 24,
 	});
 	const channels = process.env.SALEOR_APP_TOKEN

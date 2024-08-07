@@ -1,4 +1,4 @@
-import { LanguageCodeEnum, ProductListByCollectionDocument } from "@/gql/graphql";
+import { CurrentUserDocument, LanguageCodeEnum, ProductListByCollectionDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { ProductList } from "@/ui/components/ProductList";
 
@@ -9,11 +9,14 @@ export const metadata = {
 };
 
 export default async function Page({ params }: { params: { channel: string } }) {
+	const { me: user } = await executeGraphQL(CurrentUserDocument, {
+		cache: "no-cache",
+	});
 	const data = await executeGraphQL(ProductListByCollectionDocument, {
 		variables: {
 			slug: "featured-products",
 			channel: params.channel,
-			languageCode: LanguageCodeEnum.UrPk,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
 		},
 		revalidate: 60,
 	});

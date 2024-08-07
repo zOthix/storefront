@@ -1,5 +1,10 @@
 import { cookies } from "next/headers";
-import { CheckoutCreateDocument, CheckoutFindDocument, LanguageCodeEnum } from "@/gql/graphql";
+import {
+	CheckoutCreateDocument,
+	CheckoutFindDocument,
+	CurrentUserDocument,
+	type LanguageCodeEnum,
+} from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 
 export function getIdFromCookies(channel: string) {
@@ -20,11 +25,14 @@ export function saveIdToCookie(channel: string, checkoutId: string) {
 
 export async function find(checkoutId: string) {
 	try {
+		const { me: user } = await executeGraphQL(CurrentUserDocument, {
+			cache: "no-cache",
+		});
 		const { checkout } = checkoutId
 			? await executeGraphQL(CheckoutFindDocument, {
 					variables: {
 						id: checkoutId,
-						languageCode: LanguageCodeEnum.UrPk,
+						languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
 					},
 					cache: "no-cache",
 				})
