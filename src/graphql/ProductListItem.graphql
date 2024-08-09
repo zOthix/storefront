@@ -21,6 +21,12 @@ fragment ProductListItem on Product {
 	category {
 		id
 		name
+		translation(languageCode: $languageCode) {
+			name
+		}
+	}
+	translation(languageCode: $languageCode) {
+		name
 	}
 	thumbnail(size: 1024, format: WEBP) {
 		url

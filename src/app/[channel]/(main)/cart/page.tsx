@@ -62,9 +62,14 @@ export default async function Page({ params }: { params: { channel: string } }) 
 												variantId: item.variant.id,
 											})}
 										>
-											<h2 className="font-medium text-neutral-700">{item.variant?.product?.name}</h2>
+											<h2 className="font-medium text-neutral-700">
+												{item.variant?.product?.translation?.name || item.variant?.product?.name}
+											</h2>
 										</LinkWithChannel>
-										<p className="mt-1 text-sm text-neutral-500">{item.variant?.product?.category?.name}</p>
+										<p className="mt-1 text-sm text-neutral-500">
+											{item.variant?.product?.category?.translation?.name ||
+												item.variant?.product?.category?.name}
+										</p>
 										{item.variant.name !== item.variant.id && Boolean(item.variant.name) && (
 											<p className="mt-1 text-sm text-neutral-500">Variant: {item.variant.name}</p>
 										)}

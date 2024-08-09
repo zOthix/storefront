@@ -1,4 +1,4 @@
-query CheckoutFind($id: ID!) {
+query CheckoutFind($id: ID!, $languageCode: LanguageCodeEnum!) {
 	checkout(id: $id) {
 		id
 		email
@@ -21,6 +21,12 @@ query CheckoutFind($id: ID!) {
 						alt
 					}
 					category {
+						name
+						translation(languageCode: $languageCode) {
+							name
+						}
+					}
+					translation(languageCode: $languageCode) {
 						name
 					}
 				}

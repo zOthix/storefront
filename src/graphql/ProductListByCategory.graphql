@@ -1,9 +1,12 @@
-query ProductListByCategory($slug: String!, $channel: String!) {
+query ProductListByCategory($slug: String!, $channel: String!, $languageCode: LanguageCodeEnum!) {
 	category(slug: $slug) {
 		name
 		description
 		seoDescription
 		seoTitle
+		translation(languageCode: $languageCode) {
+			name
+		}
 		products(first: 100, channel: $channel) {
 			edges {
 				node {

@@ -2,14 +2,20 @@ import { notFound } from "next/navigation";
 import { type Metadata } from "next";
 import edjsHTML from "editorjs-html";
 import xss from "xss";
-import { PageGetBySlugDocument } from "@/gql/graphql";
+import { CurrentUserDocument, LanguageCodeEnum, PageGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 
 const parser = edjsHTML();
 
 export const generateMetadata = async ({ params }: { params: { slug: string } }): Promise<Metadata> => {
+	const { me: user } = await executeGraphQL(CurrentUserDocument, {
+		cache: "no-cache",
+	});
 	const { page } = await executeGraphQL(PageGetBySlugDocument, {
-		variables: { slug: params.slug },
+		variables: {
+			slug: params.slug,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
+		},
 		revalidate: 60,
 	});
 
@@ -20,8 +26,14 @@ export const generateMetadata = async ({ params }: { params: { slug: string } })
 };
 
 export default async function Page({ params }: { params: { slug: string } }) {
+	const { me: user } = await executeGraphQL(CurrentUserDocument, {
+		cache: "no-cache",
+	});
 	const { page } = await executeGraphQL(PageGetBySlugDocument, {
-		variables: { slug: params.slug },
+		variables: {
+			slug: params.slug,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
+		},
 		revalidate: 60,
 	});
 
@@ -29,17 +41,17 @@ export default async function Page({ params }: { params: { slug: string } }) {
 		notFound();
 	}
 
-	const { title, content } = page;
+	const { title, content, translation } = page;
 
 	const contentHtml = content ? parser.parse(JSON.parse(content)) : null;
 
 	return (
 		<div className="mx-auto max-w-7xl p-8 pb-16">
-			<h1 className="text-3xl font-semibold">{title}</h1>
+			<h1 className="text-3xl font-semibold">{translation?.title || title}</h1>
 			{contentHtml && (
 				<div className="prose">
 					{contentHtml.map((content) => (
-						<div key={content} dangerouslySetInnerHTML={{ __html: xss(content) }} />
+						<div key={content} dangerouslySetInnerHTML={{ __html: xss(translation?.content || content) }} />
 					))}
 				</div>
 			)}
