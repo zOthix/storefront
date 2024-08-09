@@ -1,0 +1,21 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "feat/add-announcement-bar",
+    "feat/add-translation-on-storefront",
+    "main",
+    "origin"
+  ],
+  "parent": {
+    "feat/add-announcement-bar": "main",
+    "feat/add-translation-on-storefront": "main",
+    "main": null,
+    "origin": "main"
+  },
+  "order": [
+    "main",
+    "feat/add-announcement-bar",
+    "feat/add-translation-on-storefront",
+    "origin"
+  ]
+}
