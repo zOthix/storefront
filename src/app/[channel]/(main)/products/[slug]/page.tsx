@@ -1,3 +1,4 @@
+"use server";
 import edjsHTML from "editorjs-html";
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
@@ -10,9 +11,36 @@ import { VariantSelector } from "@/ui/components/VariantSelector";
 import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
 import { executeGraphQL } from "@/lib/graphql";
 import { formatMoney, formatMoneyRange } from "@/lib/utils";
-import { CheckoutAddLineDocument, ProductDetailsDocument, ProductListDocument } from "@/gql/graphql";
+import {
+	CheckoutAddLineDocument,
+	CurrentUserDocument,
+	LanguageCodeEnum,
+	ProductDetailsDocument,
+	ProductListDocument,
+} from "@/gql/graphql";
 import * as Checkout from "@/lib/checkout";
 import { AvailabilityMessage } from "@/ui/components/AvailabilityMessage";
+
+let user: {
+	__typename?: "User";
+	id: string;
+	email: string;
+	firstName: string;
+	lastName: string;
+	languageCode: LanguageCodeEnum;
+	avatar?: {
+		__typename?: "Image";
+		url: string;
+		alt?: string | null;
+	} | null;
+} | null | undefined
+
+export async function getCurrentUser() {
+	const { me: user } = await executeGraphQL(CurrentUserDocument, {
+		cache: "no-cache",
+	});
+	return user;
+}
 
 export async function generateMetadata(
 	{
@@ -28,6 +56,7 @@ export async function generateMetadata(
 		variables: {
 			slug: decodeURIComponent(params.slug),
 			channel: params.channel,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
 		},
 		revalidate: 60,
 	});
@@ -50,13 +79,13 @@ export async function generateMetadata(
 		},
 		openGraph: product.thumbnail
 			? {
-					images: [
-						{
-							url: product.thumbnail.url,
-							alt: product.name,
-						},
-					],
-			  }
+				images: [
+					{
+						url: product.thumbnail.url,
+						alt: product.name,
+					},
+				],
+			}
 			: null,
 	};
 }
@@ -64,7 +93,11 @@ export async function generateMetadata(
 export async function generateStaticParams({ params }: { params: { channel: string } }) {
 	const { products } = await executeGraphQL(ProductListDocument, {
 		revalidate: 60,
-		variables: { first: 20, channel: params.channel },
+		variables: {
+			first: 20,
+			channel: params.channel,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
+		},
 		withAuth: false,
 	});
 
@@ -81,10 +114,12 @@ export default async function Page({
 	params: { slug: string; channel: string };
 	searchParams: { variant?: string };
 }) {
+	user = await getCurrentUser();
 	const { product } = await executeGraphQL(ProductDetailsDocument, {
 		variables: {
 			slug: decodeURIComponent(params.slug),
 			channel: params.channel,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
 		},
 		revalidate: 60,
 	});
@@ -132,11 +167,11 @@ export default async function Page({
 	const price = selectedVariant?.pricing?.price?.gross
 		? formatMoney(selectedVariant.pricing.price.gross.amount, selectedVariant.pricing.price.gross.currency)
 		: isAvailable
-		  ? formatMoneyRange({
-					start: product?.pricing?.priceRange?.start?.gross,
-					stop: product?.pricing?.priceRange?.stop?.gross,
-		    })
-		  : "";
+			? formatMoneyRange({
+				start: product?.pricing?.priceRange?.start?.gross,
+				stop: product?.pricing?.priceRange?.stop?.gross,
+			})
+			: "";
 
 	const productJsonLd: WithContext<Product> = {
 		"@context": "https://schema.org",
@@ -144,31 +179,31 @@ export default async function Page({
 		image: product.thumbnail?.url,
 		...(selectedVariant
 			? {
-					name: `${product.name} - ${selectedVariant.name}`,
-					description: product.seoDescription || `${product.name} - ${selectedVariant.name}`,
-					offers: {
-						"@type": "Offer",
-						availability: selectedVariant.quantityAvailable
-							? "https://schema.org/InStock"
-							: "https://schema.org/OutOfStock",
-						priceCurrency: selectedVariant.pricing?.price?.gross.currency,
-						price: selectedVariant.pricing?.price?.gross.amount,
-					},
-			  }
+				name: `${product.name} - ${selectedVariant.name}`,
+				description: product.seoDescription || `${product.name} - ${selectedVariant.name}`,
+				offers: {
+					"@type": "Offer",
+					availability: selectedVariant.quantityAvailable
+						? "https://schema.org/InStock"
+						: "https://schema.org/OutOfStock",
+					priceCurrency: selectedVariant.pricing?.price?.gross.currency,
+					price: selectedVariant.pricing?.price?.gross.amount,
+				},
+			}
 			: {
-					name: product.name,
+				name: product.name,
 
-					description: product.seoDescription || product.name,
-					offers: {
-						"@type": "AggregateOffer",
-						availability: product.variants?.some((variant) => variant.quantityAvailable)
-							? "https://schema.org/InStock"
-							: "https://schema.org/OutOfStock",
-						priceCurrency: product.pricing?.priceRange?.start?.gross.currency,
-						lowPrice: product.pricing?.priceRange?.start?.gross.amount,
-						highPrice: product.pricing?.priceRange?.stop?.gross.amount,
-					},
-			  }),
+				description: product.seoDescription || product.name,
+				offers: {
+					"@type": "AggregateOffer",
+					availability: product.variants?.some((variant) => variant.quantityAvailable)
+						? "https://schema.org/InStock"
+						: "https://schema.org/OutOfStock",
+					priceCurrency: product.pricing?.priceRange?.start?.gross.currency,
+					lowPrice: product.pricing?.priceRange?.start?.gross.amount,
+					highPrice: product.pricing?.priceRange?.stop?.gross.amount,
+				},
+			}),
 	};
 
 	return (
@@ -194,7 +229,7 @@ export default async function Page({
 				<div className="flex flex-col pt-6 sm:col-span-1 sm:px-6 sm:pt-0 lg:col-span-3 lg:pt-16">
 					<div>
 						<h1 className="mb-4 flex-auto text-3xl font-medium tracking-tight text-neutral-900">
-							{product?.name}
+							{product?.translation?.name || product?.name}
 						</h1>
 						<p className="mb-8 text-sm " data-testid="ProductElement_Price">
 							{price}

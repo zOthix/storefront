@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ProductListPaginatedDocument } from "@/gql/graphql";
+import { CurrentUserDocument, LanguageCodeEnum, ProductListPaginatedDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { Pagination } from "@/ui/components/Pagination";
 import { ProductList } from "@/ui/components/ProductList";
@@ -20,12 +20,15 @@ export default async function Page({
 	};
 }) {
 	const cursor = typeof searchParams.cursor === "string" ? searchParams.cursor : null;
-
+	const { me: user } = await executeGraphQL(CurrentUserDocument, {
+		cache: "no-cache",
+	});
 	const { products } = await executeGraphQL(ProductListPaginatedDocument, {
 		variables: {
 			first: ProductsPerPage,
 			after: cursor,
 			channel: params.channel,
+			languageCode: (user?.languageCode as LanguageCodeEnum) || LanguageCodeEnum.En,
 		},
 		revalidate: 60,
 	});
