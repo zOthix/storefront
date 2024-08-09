@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { type Metadata } from "next";
 import edjsHTML from "editorjs-html";
 import xss from "xss";
-import { CurrentUserDocument, type LanguageCodeEnum, PageGetBySlugDocument } from "@/gql/graphql";
+import { CurrentUserDocument, LanguageCodeEnum, PageGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 
 const parser = edjsHTML();

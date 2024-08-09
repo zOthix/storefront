@@ -1,16 +1,33 @@
 import { notFound } from "next/navigation";
 import { type ResolvingMetadata, type Metadata } from "next";
-import { CurrentUserDocument, type LanguageCodeEnum, ProductListByCategoryDocument } from "@/gql/graphql";
+import { CurrentUserDocument, LanguageCodeEnum, ProductListByCategoryDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { ProductList } from "@/ui/components/ProductList";
 
+let user: {
+	__typename?: "User";
+	id: string;
+	email: string;
+	firstName: string;
+	lastName: string;
+	languageCode: LanguageCodeEnum;
+	avatar?: {
+		__typename?: "Image";
+		url: string;
+		alt?: string | null;
+	} | null;
+} | null | undefined
+export async function getCurrentUser() {
+	const { me: user } = await executeGraphQL(CurrentUserDocument, {
+		cache: "no-cache",
+	});
+	return user;
+}
 export const generateMetadata = async (
 	{ params }: { params: { slug: string; channel: string } },
 	parent: ResolvingMetadata,
 ): Promise<Metadata> => {
-	const { me: user } = await executeGraphQL(CurrentUserDocument, {
-		cache: "no-cache",
-	});
+	user = await getCurrentUser()
 	const { category } = await executeGraphQL(ProductListByCategoryDocument, {
 		variables: {
 			slug: params.slug,
@@ -27,9 +44,6 @@ export const generateMetadata = async (
 };
 
 export default async function Page({ params }: { params: { slug: string; channel: string } }) {
-	const { me: user } = await executeGraphQL(CurrentUserDocument, {
-		cache: "no-cache",
-	});
 	const { category } = await executeGraphQL(ProductListByCategoryDocument, {
 		variables: {
 			slug: params.slug,
@@ -43,11 +57,11 @@ export default async function Page({ params }: { params: { slug: string; channel
 		notFound();
 	}
 
-	const { name, products } = category;
+	const { name, products, translation } = category;
 
 	return (
 		<div className="mx-auto max-w-7xl p-8 pb-16">
-			<h1 className="pb-8 text-xl font-semibold">{name}</h1>
+			<h1 className="pb-8 text-xl font-semibold">{translation?.name || name}</h1>
 			<ProductList products={products.edges.map((e) => e.node)} />
 		</div>
 	);

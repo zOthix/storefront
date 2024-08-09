@@ -4,6 +4,9 @@ query ProductListByCategory($slug: String!, $channel: String!, $languageCode: La
 		description
 		seoDescription
 		seoTitle
+		translation(languageCode: $languageCode) {
+			name
+		}
 		products(first: 100, channel: $channel) {
 			edges {
 				node {
