@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { type ResolvingMetadata, type Metadata } from "next";
-import { CurrentUserDocument, type LanguageCodeEnum, ProductListByCollectionDocument } from "@/gql/graphql";
+import { CurrentUserDocument, LanguageCodeEnum, ProductListByCollectionDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { ProductList } from "@/ui/components/ProductList";
 

@@ -8,7 +8,6 @@ export async function UserMenuContainer() {
 	const { me: user } = await executeGraphQL(CurrentUserDocument, {
 		cache: "no-cache",
 	});
-	console.log(user, "---");
 
 	if (user) {
 		return <UserMenu user={user} />;
