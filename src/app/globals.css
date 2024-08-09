@@ -5,3 +5,22 @@
 body {
 	overflow-x: hidden;
 }
+
+@media (max-width: 425px) {
+	.banner_centered {
+		width: 100% !important;
+		max-width: 100% !important;
+		height: 100% !important;
+		max-height: 100% !important;
+	}
+}
+
+@media (max-width: 640px) {
+	.banner_bottom {
+		height: unset !important;
+	}
+
+	.banner_top {
+		height: unset !important;
+	}
+}
